@@ -1,3 +1,4 @@
+import tkinter as tk
 from itertools import permutations
 from pathlib import Path
 
@@ -26,7 +27,7 @@ for i in range(linhas):
     for j in range(colunas):
         parte = matriz[i][j]
         if parte != "0":
-            pontos[parte] = (i, j)
+            pontos[parte] = (i+1, j+1)
 
 print(f"\nPontos encontrados: {pontos}")
 
