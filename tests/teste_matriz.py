@@ -40,13 +40,13 @@ def distancia(p1, p2):
     return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
 
-def leitura_arquivo_txt(arquivo): 
+def leitura_arquivo_txt(arquivo_txt): 
     
     matriz = []
     pontos = {}
     
     try:
-        with open(arquivo, "r") as f:
+        with open(arquivo_txt, "r") as f:
             linha_inicial = "" 
             while not linha_inicial:
                 linha_inicial = f.readline().strip()
@@ -71,18 +71,18 @@ def leitura_arquivo_txt(arquivo):
         return matriz, pontos
     
     except FileNotFoundError:
-        print(f"ERRO: Arquivo não encontrado em {arquivo}")
+        print(f"ERRO: arquivo_txt não encontrado em {arquivo_txt}")
         return None, None
     except Exception as e:
         print(f"Ocorreu um erro durante a leitura do arquivo: {e}")
         return None, None
 
 
-def converte_matriz_para_tsplib(arquivo, output_file):
+def converte_matriz_para_tsplib(arquivo_txt, output_file):
     nodes = []
     
     try:
-        with open(arquivo, 'r') as f:
+        with open(arquivo_txt, 'r') as f:
             lines = [l.strip() for l in f.readlines() if l.strip()]
             if len(lines) < 2:
                 print("Erro: O arquivo de mapa não tem dados suficientes para conversão.")
@@ -179,14 +179,13 @@ def menu(menu_algoritmo_bruto, menu_algoritmo_genetico):
 
         if escolha == "1":
             limpar_terminal()
-            menu_algoritmo_bruto
-            break
+            return "bruto"
         elif escolha == "2":
             limpar_terminal()
-            menu_algoritmo_genetico
-            break
+            return "genetico"
         else:
             print("Opção inválida")
+            print("Pressione ENTER para continuar")
             limpar_terminal()
 
 
@@ -271,43 +270,55 @@ def menu_algoritmo_bruto(matriz, todas_rotas, melhor_rota, melhor_distancia, pon
             limpar_terminal()
 
 
+def leitura_tsp(arquivo_tsp):
+    pass
+
 
 def menu_algoritmo_genetico():
-    pass
+    print("Você chegou aqui")
 
 def main():
     """
     Função principal que coordena o fluxo do programa.
     """
     limpar_terminal()
-    print("Iniciando o solucionador TSP...")
 
-    # Caminho do arquivo
+    # Caminho do arquivo txt
     ROOT_PATH = Path(__file__).parent.parent
-    arquivo = ROOT_PATH / "dados" / "mapa_exemplo.txt"
+    arquivo_txt = ROOT_PATH / "dados" / "mapa_exemplo.txt"
+    arquivo_tsp = ROOT_PATH / "dados" / "mapa_exemplo.tsp"
 
     # Captura os valores retornados pela função de leitura
-    matriz, pontos = leitura_arquivo_txt(arquivo)
+    matriz, pontos = leitura_arquivo_txt(arquivo_txt)
     
     if matriz is None or pontos is None:
         print("Falha ao carregar dados. Encerrando.")
         return
 
-    # Captura os valores retornados pela função de força bruta e o tempo de execução
-
-    inicio = time.time()
-    todas_rotas, melhor_rota, melhor_distancia = algoritmo_forca_bruta(pontos)
-    fim = time.time()
-    tempo_execucao = fim - inicio
-    
     # Geração do arquivo TSPLIB
-    converte_matriz_para_tsplib(arquivo, "mapa_exemplo.tsp")
+    converte_matriz_para_tsplib(arquivo_txt, "mapa_exemplo.tsp")
 
-    menu(menu_algoritmo_bruto, menu_algoritmo_genetico)
+    # Menu para escolha do algoritmo 
+    escolha = menu(menu_algoritmo_bruto, menu_algoritmo_genetico)
 
-    # Inicia o menu_algoritmo_bruto, passando os resultados como argumentos
+    if escolha == "bruto":
 
-    menu_algoritmo_bruto(matriz, todas_rotas, melhor_rota, melhor_distancia, pontos, tempo_execucao)
+        print("Em busca da solução...")
+
+        # Captura os valores retornados pela função de força bruta e o tempo de execução
+
+        inicio = time.time()
+        todas_rotas, melhor_rota, melhor_distancia = algoritmo_forca_bruta(pontos)
+        fim = time.time()
+        tempo_execucao = fim - inicio
+
+        # Inicia o menu_algoritmo_bruto, passando os resultados como argumentos
+
+        menu_algoritmo_bruto(matriz, todas_rotas, melhor_rota, melhor_distancia, pontos, tempo_execucao)
+
+    elif escolha == "genetico":
+        menu_algoritmo_genetico()
+
 
 if __name__ == "__main__":
     main()

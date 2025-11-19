@@ -1,0 +1,22 @@
+NAME: GridMap_Converted
+TYPE: TSP
+COMMENT: Mapeamento original -> 1=D, 2=I, 3=N, 4=C, 5=H, 6=B, 7=E, 8=K, 9=L, 10=F, 11=A, 12=M, 13=G, 14=R, 15=J
+DIMENSION: 15
+EDGE_WEIGHT_TYPE: EUC_2D
+NODE_COORD_SECTION
+1 2.0 1.0
+2 9.0 1.0
+3 1.0 3.0
+4 6.0 3.0
+5 12.0 3.0
+6 3.0 5.0
+7 10.0 5.0
+8 5.0 6.0
+9 12.0 6.0
+10 9.0 7.0
+11 2.0 8.0
+12 4.0 9.0
+13 11.0 9.0
+14 1.0 10.0
+15 7.0 10.0
+EOF
