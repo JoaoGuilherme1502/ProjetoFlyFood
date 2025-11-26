@@ -10,20 +10,31 @@ def distancia_manhattan(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 def leitura_arquivo_txt(arquivo):
-    """Lê o mapa TXT (formato que você já usa)."""
-    matriz = []
-    pontos = {}
+    """
+    Lê um arquivo de mapa no formato TXT.
+
+    O arquivo deve conter:
+    - Primeira linha: duas dimensões que são as linhas e colunas
+    - Demais linhas é a matriz indicando pontos, onde "0" representa espaço vazio, R representa o restaurante e "A, B, ..." representam os pontos de entrega"
+    """
+
+    matriz = []  # lista de listas contendo o mapa
+    pontos = {}  # dicionário mapeando cada ponto á sua coordenada(linha, coluna)
     try:
         with open(arquivo, "r") as f:
+            # Evitando as linhas vazias(caso tenha) e pulando até a primeira linha útil
             linha_inicial = ""
             while not linha_inicial:
                 linha_inicial = f.readline().strip()
             if not linha_inicial:
                 raise ValueError("O arquivo de mapa está vazio ou não possui dimensões.")
+            # A primeira linha do arquivo vem com: linhas, colunas
             linhas, colunas = map(int, linha_inicial.split())
+            # Agora é feita a leitura do restante da matriz
             for _ in range(linhas):
                 linha = f.readline().strip().split()
                 matriz.append(linha)
+        # Percorre a matriz e guarda apenas as partes diferentes de "0"
         for i in range(linhas):
             for j in range(colunas):
                 parte = matriz[i][j]
@@ -32,25 +43,41 @@ def leitura_arquivo_txt(arquivo):
         return matriz, pontos
     except FileNotFoundError:
         print(f"ERRO: Arquivo não encontrado em {arquivo}")
-        return None, None
+        return None, None # sem linha, sem coluna
     except Exception as e:
         print(f"Ocorreu um erro durante a leitura do arquivo: {e}")
         return None, None
 
 def converte_matriz_para_tsplib(arquivo_txt, output_file):
-    """Converte o mapa TXT para um arquivo .tsp"""
+    """
+    Converte o mapa TXT para um arquivo .tsp
+
+    O arquivo gerado contém:
+    - Formato TSPLIB 
+        - NAME
+        - TTYPE
+        - DIMENSION
+        EDGE_WEIGHT_TYPE
+    - Mapeamento 
+    """
+
     nodes = []
     try:
+        # Lê o arquivo e apenas a linha com conteúdo
         with open(arquivo_txt, 'r') as f:
             lines = [l.rstrip("\n") for l in f if l.strip()]
+            # O arquivo precisa ter pelo menos dimensões e 1 linha de mapa
             if len(lines) < 2:
                 print("Erro: O arquivo de mapa não tem dados suficientes para conversão.")
                 return
+        # As dimensões são ignoradas
         grid_lines = lines[1:]
         node_id_counter = 1
+        # Aqui percorre o mapa montando os nós que serão exportados no .tsp
         for row_index, line in enumerate(grid_lines):
             cells = line.split()
             for col_index, value in enumerate(cells):
+                # Só adiciona como nó se não for "0"
                 if value != '0':
                     nodes.append({
                         'id': node_id_counter,
@@ -66,6 +93,8 @@ def converte_matriz_para_tsplib(arquivo_txt, output_file):
                 out_path.parent.mkdir(parents=True, exist_ok=True)
             except Exception:
                 pass
+
+        # Aqui começa a escrever o arquivo .tsp
         with open(out_path, 'w') as f:
             f.write("NAME: GridMap_Converted\n")
             f.write("TYPE: TSP\n")
@@ -83,15 +112,13 @@ def converte_matriz_para_tsplib(arquivo_txt, output_file):
 
 def leitura_tsp(brazil58_tsp):
     """
-    Lê um arquivo .tsp (TSPLIB) e retorna:
-      - ids_list: lista de identificadores (strings) na ordem 0..n-1
-      - coords_raw: dict {id: (x,y)} se houver NODE_COORD_SECTION (senão {})
-      - dist_matrix: matriz n x n com distâncias inteiras/float
-      - idx_map: dict {id: index}
-    Suporta EDGE_WEIGHT_SECTION com EDGE_WEIGHT_FORMAT = UPPER_ROW e FULL_MATRIX,
-    e NODE_COORD_SECTION (EUC_2D).
-    Também tenta ler mapeamento de ids a partir de "COMMENT: ... -> 1=A,2=B".
+    Lê um arquivo TSPLIB (.tsp) e monta:
+    - lista de ids
+    - coordenadas
+    - matriz de distâncias
+    - índice de cada nó
     """
+    
     coords_raw = {}
     id_map_comment = {}
     leitura_coords = False
@@ -208,12 +235,6 @@ def leitura_tsp(brazil58_tsp):
                             # ignora tokens estranhos
                             pass
                     continue
-
-                # Se chegar aqui e houver "EDGE_WEIGHT_FORMAT" ou "NODE_COORD_SECTION" não explicitados,
-                # apenas segue lendo cabeçalho até encontrar seções.
-                # Também tenta capturar DIMENSION se não saiu antes.
-                # Já tratamos as principais diretivas.
-                # Continue lendo.
                 continue
 
     except FileNotFoundError:
