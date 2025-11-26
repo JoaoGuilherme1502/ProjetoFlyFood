@@ -79,8 +79,8 @@ def custo_rota(rota, deposito, mapa_idx, matriz_dist):
 
 def executar_algoritmo_genetico(
     arquivo_tsp,
-    populacao_tam=200,
-    geracoes=500,
+    populacao_tam,
+    geracoes,
     taxa_mutacao=0.1,
     torneio_k=3,
     elitismo=True,

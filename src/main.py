@@ -14,6 +14,7 @@ def main():
 
     arquivo_txt = ROOT / "dados" / "mapa_exemplo.txt"
     arquivo_tsp = ROOT / "dados" / "mapa_exemplo.tsp"
+    brazil58_tsp = ROOT / "dados" / "brazil58.tsp"
 
     matriz, pontos = leitura_arquivo_txt(arquivo_txt)
 
@@ -44,9 +45,9 @@ def main():
 
             inicio = time.time()
             melhor_rota, melhor_distancia = executar_algoritmo_genetico(
-                arquivo_tsp,
-                populacao_tam=200,
-                geracoes=500,
+                brazil58_tsp,
+                populacao_tam=500,
+                geracoes=800,
                 taxa_mutacao=0.1,
                 torneio_k=3,
                 elitismo=True

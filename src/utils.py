@@ -81,36 +81,106 @@ def converte_matriz_para_tsplib(arquivo_txt, output_file):
     except Exception as e:
         print(f"Ocorreu um erro na conversão TSPLIB: {e}")
 
-def leitura_tsp(arquivo_tsp):
-    """Lê um arquivo .tsp"""
+def leitura_tsp(brazil58_tsp):
+    """
+    Lê um arquivo .tsp (TSPLIB) e retorna:
+      - ids_list: lista de identificadores (strings) na ordem 0..n-1
+      - coords_raw: dict {id: (x,y)} se houver NODE_COORD_SECTION (senão {})
+      - dist_matrix: matriz n x n com distâncias inteiras/float
+      - idx_map: dict {id: index}
+    Suporta EDGE_WEIGHT_SECTION com EDGE_WEIGHT_FORMAT = UPPER_ROW e FULL_MATRIX,
+    e NODE_COORD_SECTION (EUC_2D).
+    Também tenta ler mapeamento de ids a partir de "COMMENT: ... -> 1=A,2=B".
+    """
     coords_raw = {}
     id_map_comment = {}
     leitura_coords = False
+    leitura_edges = False
+    edge_format = None
+    edge_type = None
+    dimension = None
+    weights_values = []
+
     try:
-        with open(arquivo_tsp, "r") as f:
-            for line in f:
-                texto = line.strip()
-                if not texto:
+        with open(brazil58_tsp, "r") as f:
+            for raw_line in f:
+                line = raw_line.strip()
+                if not line:
                     continue
-                if texto.upper().startswith("COMMENT:") and "->" in texto:
+
+                upper = line.upper()
+                # captura DIMENSION
+                if upper.startswith("DIMENSION"):
                     try:
-                        parte = texto.split("->", 1)[1].strip()
-                        pares = [p.strip() for p in parte.split(",")]
+                        _, val = line.split(":", 1)
+                        dimension = int(val.strip())
+                    except Exception:
+                        parts = line.split()
+                        if len(parts) >= 2 and parts[-1].isdigit():
+                            dimension = int(parts[-1])
+                    continue
+
+                # captura EDGE_WEIGHT_FORMAT
+                if upper.startswith("EDGE_WEIGHT_FORMAT"):
+                    try:
+                        _, val = line.split(":", 1)
+                        edge_format = val.strip().upper()
+                    except Exception:
+                        edge_format = line.split()[-1].upper()
+                    continue
+
+                # captura EDGE_WEIGHT_TYPE
+                if upper.startswith("EDGE_WEIGHT_TYPE"):
+                    try:
+                        _, val = line.split(":", 1)
+                        edge_type = val.strip().upper()
+                    except Exception:
+                        edge_type = line.split()[-1].upper()
+                    continue
+
+                # mapeamento via COMMENT "->"
+                if upper.startswith("COMMENT") and "->" in line:
+                    try:
+                        parte = line.split("->", 1)[1].strip()
+                        pares = [p.strip() for p in parte.split(",") if p.strip()]
                         for par in pares:
                             if "=" in par:
                                 left, right = par.split("=", 1)
-                                id_map_comment[int(left.strip())] = right.strip()
+                                left = left.strip()
+                                right = right.strip()
+                                # tenta converter left para int (índice)
+                                try:
+                                    key = int(left)
+                                except Exception:
+                                    # se não for inteiro, ignore
+                                    continue
+                                id_map_comment[key] = right
                     except Exception:
                         pass
-                if texto.upper().startswith("NODE_COORD_SECTION"):
-                    leitura_coords = True
                     continue
+
+                # Início de seção de coordenadas
+                if upper == "NODE_COORD_SECTION":
+                    leitura_coords = True
+                    leitura_edges = False
+                    continue
+
+                # Início de seção de pesos
+                if upper == "EDGE_WEIGHT_SECTION":
+                    leitura_edges = True
+                    leitura_coords = False
+                    continue
+
+                # Fim de arquivo
+                if upper == "EOF":
+                    break
+
+                # Leitura de coordenadas
                 if leitura_coords:
-                    if texto.upper() == "EOF":
-                        break
-                    partes = texto.split()
+                    partes = line.split()
                     if len(partes) >= 3:
                         node_id_raw = partes[0]
+                        # tenta mapear para id legível se existir mapeamento no COMMENT
                         try:
                             node_id_int = int(node_id_raw)
                             node_key = id_map_comment.get(node_id_int, str(node_id_int))
@@ -119,20 +189,143 @@ def leitura_tsp(arquivo_tsp):
                         x = float(partes[1])
                         y = float(partes[2])
                         coords_raw[node_key] = (x, y)
+                    continue
+
+                # Leitura de valores da matriz de arestas (coleção de números)
+                if leitura_edges:
+                    # a seção pode ter números separados por espaços e possivelmente quebras de linha
+                    partes = line.split()
+                    for p in partes:
+                        # pula caracteres não numéricos
+                        try:
+                            # pode ser inteiro ou float; guardamos como int se inteiro
+                            if "." in p:
+                                val = float(p)
+                            else:
+                                val = int(p)
+                            weights_values.append(val)
+                        except Exception:
+                            # ignora tokens estranhos
+                            pass
+                    continue
+
+                # Se chegar aqui e houver "EDGE_WEIGHT_FORMAT" ou "NODE_COORD_SECTION" não explicitados,
+                # apenas segue lendo cabeçalho até encontrar seções.
+                # Também tenta capturar DIMENSION se não saiu antes.
+                # Já tratamos as principais diretivas.
+                # Continue lendo.
+                continue
+
     except FileNotFoundError:
-        print(f"Arquivo .tsp não encontrado: {arquivo_tsp}")
+        print(f"Arquivo .tsp não encontrado: {brazil58_tsp}")
         return [], {}, [], {}
     except Exception as e:
         print(f"Erro ao ler .tsp: {e}")
         return [], {}, [], {}
 
-    ids_list = list(coords_raw.keys())
-    idx_map = {node: i for i, node in enumerate(ids_list)}
-    n = len(ids_list)
+    # Validar dimensão
+    if dimension is None:
+        # se temos coords_raw, inferir dimensão
+        if coords_raw:
+            dimension = len(coords_raw)
+        elif weights_values:
+            # tenta inferir n a partir do número de valores (para UPPER_ROW)
+            m = len(weights_values)
+            # n*(n-1)/2 = m  -> n^2 - n - 2m = 0
+            import math
+            disc = 1 + 8*m
+            n_est = int((1 + math.isqrt(disc)) // 2)
+            if n_est * (n_est - 1) // 2 == m:
+                dimension = n_est
+            else:
+                print("Não foi possível inferir DIMENSION do arquivo .tsp.")
+                return [], {}, [], {}
+        else:
+            print("DIMENSION não encontrada e não há dados suficientes.")
+            return [], {}, [], {}
+
+    n = dimension
+
+    # Se temos coords_raw -> construir matriz por Manhattan (ou EUC_2D se preferir).
+    if coords_raw:
+        ids_list = list(coords_raw.keys())
+        idx_map = {node: i for i, node in enumerate(ids_list)}
+        # construir matriz usando Manhattan (seguindo seu código original)
+        dist_matrix = [[0]*n for _ in range(n)]
+        for i in range(n):
+            for j in range(n):
+                xi, yi = coords_raw[ids_list[i]]
+                xj, yj = coords_raw[ids_list[j]]
+                dist_matrix[i][j] = abs(xi - xj) + abs(yi - yj)
+        return ids_list, coords_raw, dist_matrix, idx_map
+
+    # Caso não haja coords_raw: usamos EDGE_WEIGHT_SECTION (valores explícitos)
+    if not weights_values:
+        # não há coordenadas nem matriz explícita
+        print("Nenhuma coordenada nem seção de pesos encontrada no .tsp.")
+        return [], {}, [], {}
+
+    # Reconstruir matriz a partir de weights_values segundo edge_format
     dist_matrix = [[0]*n for _ in range(n)]
-    for i in range(n):
-        for j in range(n):
-            xi, yi = coords_raw[ids_list[i]]
-            xj, yj = coords_raw[ids_list[j]]
-            dist_matrix[i][j] = abs(xi - xj) + abs(yi - yj)
+    if edge_format is None:
+        # tenta inferir: se #valores == n*(n-1)/2 -> UPPER_ROW provável
+        expected_upper = n*(n-1)//2
+        if len(weights_values) == expected_upper:
+            edge_format = "UPPER_ROW"
+        elif len(weights_values) == n*n:
+            edge_format = "FULL_MATRIX"
+        else:
+            # fallback
+            edge_format = "UNKNOWN"
+
+    if edge_format in ("UPPER_ROW", "UPPERDIAGROW", "UPPER_ROW"):
+        # preencher triangular superior: para i=0..n-2, j=i+1..n-1
+        idx = 0
+        try:
+            for i in range(n):
+                for j in range(i+1, n):
+                    val = weights_values[idx]
+                    dist_matrix[i][j] = val
+                    dist_matrix[j][i] = val
+                    idx += 1
+        except IndexError:
+            print("Valores insuficientes em EDGE_WEIGHT_SECTION para UPPER_ROW.")
+            return [], {}, [], {}
+    elif edge_format == "FULL_MATRIX":
+        # preencher linha a linha (n*n valores)
+        if len(weights_values) < n*n:
+            print("FULL_MATRIX: valores insuficientes.")
+            return [], {}, [], {}
+        idx = 0
+        for i in range(n):
+            for j in range(n):
+                dist_matrix[i][j] = weights_values[idx]
+                idx += 1
+    else:
+        # formatos não tratados explicitamente: tenta preencher simetricamente
+        expected_upper = n*(n-1)//2
+        if len(weights_values) == expected_upper:
+            idx = 0
+            for i in range(n):
+                for j in range(i+1, n):
+                    val = weights_values[idx]
+                    dist_matrix[i][j] = val
+                    dist_matrix[j][i] = val
+                    idx += 1
+        else:
+            print(f"Formato EDGE_WEIGHT_FORMAT='{edge_format}' não suportado automaticamente.")
+            return [], {}, [], {}
+
+    # construir ids_list: se id_map_comment tem mapeamento para 1..n, usa; senão, usa '1'..'n'
+    ids_list = []
+    if id_map_comment:
+        # id_map_comment keys são inteiros (indices 1..n) — preservar ordem 1..n
+        for i in range(1, n+1):
+            ids_list.append(id_map_comment.get(i, str(i)))
+    else:
+        ids_list = [str(i) for i in range(1, n+1)]
+
+    idx_map = {node: i for i, node in enumerate(ids_list)}
     return ids_list, coords_raw, dist_matrix, idx_map
+
+
