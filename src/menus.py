@@ -1,6 +1,7 @@
 import sys
 from utils import limpar_terminal
 
+
 # Variáveis globais para armazenar os resultados do AG
 BEST_ROUTE = None
 BEST_DISTANCE = None
@@ -90,7 +91,7 @@ def menu_algoritmo_bruto(matriz, todas_rotas, melhor_rota, melhor_distancia, pon
             input("ENTER para continuar...")
 
 
-def menu_algoritmo_genetico(melhor_rota, melhor_distancia, tempo_execucao):
+def menu_algoritmo_genetico(melhor_rota, melhor_distancia, tempo_execucao, populacao_tam, geracoes, taxa_mutacao):
     while True:
         limpar_terminal()
         print("="*50)
@@ -114,6 +115,7 @@ def menu_algoritmo_genetico(melhor_rota, melhor_distancia, tempo_execucao):
 
             print(f"\nDistância total: {melhor_distancia}")
             print(f"Tempo de execução: {tempo_execucao:.4f} segundos")
+            print(f"Parâmetros utilizados:\nPopulação: {populacao_tam}\nGerações: {geracoes}\nTaxa: {taxa_mutacao}")
 
             print("=" * 50)
             input("\nPressione ENTER para voltar...")

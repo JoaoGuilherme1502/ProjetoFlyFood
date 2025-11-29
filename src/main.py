@@ -55,20 +55,35 @@ def main():
             # Mensagem de aguardo
             print("Em busca da solução...")
 
+            # é aqui que se realiza o balanceamento dos parâmetros e, escolha entre os arquivos: arquivo_tsp ou brazil58_tsp 
+            populacao_tam = 500
+            geracoes = 800
+            taxa_mutacao = 0.15
+            torneio_k = 3
+            elitismo = True
+
+
             inicio = time.time()
             melhor_rota, melhor_distancia = executar_algoritmo_genetico(
                 brazil58_tsp,
-                populacao_tam=500,
-                geracoes=800,
-                taxa_mutacao=0.1,
-                torneio_k=3,
-                elitismo=True
-            )  # é aqui que se realiza o balanceamento dos parâmetros e, escolha entre os arquivos: arquivo_tsp ou brazil58_tsp 
+                populacao_tam,
+                geracoes,
+                taxa_mutacao,
+                torneio_k,
+                elitismo
+            )  
             fim = time.time()
 
             tempo_execucao = fim - inicio
 
-            menu_algoritmo_genetico(melhor_rota, melhor_distancia, tempo_execucao) 
+            menu_algoritmo_genetico(
+                melhor_rota, 
+                melhor_distancia, 
+                tempo_execucao, 
+                populacao_tam, 
+                geracoes, 
+                taxa_mutacao
+            ) 
 
 
 if __name__ == "__main__":
