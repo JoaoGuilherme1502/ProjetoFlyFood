@@ -39,12 +39,11 @@ def main():
             # Mensagem de aguardo
             print("Em busca da solução...")
             inicio = time.time()  # Inicio da contagem da operação
-            todas_rotas, melhor_rota, melhor_dist = algoritmo_forca_bruta(pontos)
+            melhor_rota, melhor_dist = algoritmo_forca_bruta(pontos)
             fim = time.time()  # FIm da contagem da operação
 
             menu_algoritmo_bruto(
                 matriz,
-                todas_rotas,
                 melhor_rota,
                 melhor_dist,
                 pontos,

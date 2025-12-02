@@ -31,7 +31,8 @@ def menu(menu_algoritmo_bruto, menu_algoritmo_genetico):
             input("Pressione ENTER para continuar...")
 
 
-def menu_algoritmo_bruto(matriz, todas_rotas, melhor_rota, melhor_distancia, pontos, tempo_execucao):
+def menu_algoritmo_bruto(matriz, melhor_rota, melhor_distancia, pontos, tempo_execucao):
+    todas_rotas = [] # ficou limitado isso
     while True:
         limpar_terminal()
         print("="*50)
