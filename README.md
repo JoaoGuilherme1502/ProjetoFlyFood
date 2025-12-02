@@ -1,14 +1,17 @@
-# FlyFood – Algoritmo de força bruta para roteamento de drones
+# FlyFood – Algoritmo para roteamento de drones
 
 ## Descrição do projeto
 O FlyFood é um projeto acadêmico desenvolvido na Universidade Federal Rural de Pernambuco (UFRPE) com o objetivo de simular um sistema de entregas por drones autônomos em ambiente urbano.  
 O algoritmo busca determinar a rota mais eficiente para um drone realizar múltiplas entregas e retornar ao ponto inicial, minimizando a distância total percorrida.
 
-A solução é baseada no Problema do Caixeiro Viajante (TSP – Traveling Salesman Problem) e utiliza o método de força bruta para gerar todas as rotas possíveis e selecionar a de menor custo, utilizando a distância de Manhattan (movimentos apenas horizontais e verticais).
+A solução é baseada no Problema do Caixeiro Viajante (TSP – Traveling Salesman Problem) e oferece duas abordagens:
+
+- Força Bruta - adequada para instâncias pequenas.
+- Algoritmo Genético(AG) - ideal para intâncias médias ou grandes, incluindo arquivos TSPLIB.
 
 ---
 
-## Funcionamento do Algoritmo
+## Funcionamento do Algoritmo de Força Bruta
 
 1. Leitura da matriz urbana  
    O arquivo `mapa_exemplo.txt` contém a cidade representada por uma matriz.  
@@ -46,6 +49,43 @@ A solução é baseada no Problema do Caixeiro Viajante (TSP – Traveling Sales
 
 ---
 
+## Funcionamente do Algoritmo Genético
+
+O projeto inclui um AG completo com:
+- Seleção por torneio
+- Crossover ERX (Edge Recombination)
+- Mutação por swap
+- Elitismo opcional
+- População, mutação e gerações configuráveis
+  
+Além disso, o AG tem suporte a variados formatos
+- brazil58.tsp
+- arquivo.tsp(convertido de um arquivo txt)
+
+O leitor TSPLIB identifica:
+- Nome
+- Dimensão
+- Coordenadas
+- Estrutura do problema
+Exemplo de trecho:
+
+   NAME: brazil58
+
+   TYPE: TSP
+ 
+   DIMENSION: 58
+ 
+   NODE_COORD_SECTION
+ 
+   1 0 0
+ 
+   2 14 3
+ 
+   ...
+   EOF
+   
+---
+
 ## Estrutura do projeto
 
 ### 1. Requisitos
@@ -53,45 +93,44 @@ A solução é baseada no Problema do Caixeiro Viajante (TSP – Traveling Sales
 - Nenhuma biblioteca externa é necessária.
 
 
-### 2. Interatividade
+### 2. Execução
+Rodar o programa no arquivo main.py
 Durante a execução, o programa exibe o menu:
 ```
-1 - Ver melhor rota
-2 - Ver todas as rotas
+==================================================
+========= PROBLEMA DO CAIXEIRO VIAJANTE ==========
+==================================================
+1 - Algoritmo Força Bruta
+2 - Algoritmo Genético (ERX)
+Sua escolha:
 ```
-- A opção 1 mostra a rota ótima e seu custo total.  
-- A opção 2 lista todas as rotas possíveis e suas distâncias.
+- A opção 1 mostra a rota ótima usando o Algoritmo de Força Bruta(não recomendado para mais de 12 pontos).  
+- A opção 2 mostra o Algoritmo Genético(maior quantidade de pontos podem ser inseridos).
 
 ---
 
 ## Exemplo de Saída
 
 ```
-Matriz lida:
-['0', '0', '0', '0', 'D']
-['0', 'A', '0', '0', '0']
-['0', '0', '0', '0', 'C']
-['R', '0', 'B', '0', '0']
-
-Pontos encontrados: {'D': (0, 4), 'A': (1, 1), 'C': (2, 4), 'R': (3, 0), 'B': (3, 2)}
-
 1 - Ver melhor rota
-2 - Ver todas as rotas
+...
 Sua escolha: 1
 
 Melhor rota: R -> D -> C -> A -> B -> R
 Distância total: 14
+Tempo de execução: 3.034 s
 ```
 
 ---
 
-## Complexidade Computacional
+## Complexidade Computacional (Força Bruta)
 
 - Geração de permutações: O(n!)
 - Cálculo de distância por rota: O(n)
 - Complexidade total: O(n!)
 
 A abordagem é adequada apenas para instâncias pequenas (até cerca de 9 pontos), sendo inviável para grandes volumes de entregas.
+Para instâncias maiores, recomenda-se o Algoritmo Genético
 
 ---
 
