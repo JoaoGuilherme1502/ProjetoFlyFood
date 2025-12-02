@@ -18,6 +18,16 @@ Matriz 6x8 (10 pontos de entrega)
 0 0 0 0 0 0 0 G 
 R 0 E 0 0 I 0 0 
 
+Matriz 7x7 (11 pontos de entrega)
+
+7 7
+F 0 0 D 0 0 I
+0 0 0 0 0 0 0
+0 0 B 0 0 C 0
+0 0 0 0 0 0 H
+0 J 0 0 E 0 0
+0 0 A 0 0 0 K
+R 0 0 0 0 G 0
 
 Matriz 7x8 (13 pontos de entrega)
 
