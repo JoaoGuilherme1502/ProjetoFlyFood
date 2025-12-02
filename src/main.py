@@ -57,9 +57,9 @@ def main():
 
             # é aqui que se realiza o balanceamento dos parâmetros e, escolha entre os arquivos: arquivo_tsp ou brazil58_tsp 
             populacao_tam = 500
-            geracoes = 800
-            taxa_mutacao = 0.15
-            torneio_k = 3
+            geracoes = 1200
+            taxa_mutacao = 0.1
+            torneio_k = 5
             elitismo = True
 
 
